@@ -41,12 +41,8 @@ const string INVALID_WORD = "";
 //myfstream is not open
 const bool STREAM_NOT_OPEN = false;
 
-//File failed to open
-const int FAILED_TO_OPEN = false;
-
-//Can't open file with given filename
-const int FAIL_FILE_DID_NOT_OPEN = -1;
-
+//File did not open
+const bool FAILED_TO_OPEN = false;
 
 //Zeroes out array that tracks words and their occurrences
 void clearArray(){
@@ -158,7 +154,7 @@ void closeFile(fstream& myfile){
 int writeArraytoFile(const string &outputfilename){
 	fstream outputFile;
 	if(!openFile(outputFile,outputfilename,ios_base::openmode::_S_out)){
-		return constants::FAIL_FILE_DID_NOT_OPEN;
+		return FAIL_FILE_DID_NOT_OPEN;
 	}
 	if(nextSlot == 0){
 		return FAIL_NO_ARRAY_DATA;
@@ -167,8 +163,6 @@ int writeArraytoFile(const string &outputfilename){
 	for(int i = 0; i<nextSlot; i++){
 		string occurString = to_string(entryArray[i].number_occurrences);
 		outputFile << entryArray[i].word + " " + occurString + "\n";
-		cout << entryArray[i].word + " " + occurString + "\n";
-
 	}
 
 	closeFile(outputFile);
@@ -188,7 +182,12 @@ void sortArray(sortOrder so){
 
 			for (i = 1; i < n; i++){
 				for (j = 0; j < n-1; j++){
-					if(entryArray[j].word < entryArray[j+1].word){
+					string currentCopy = entryArray[j].word;
+					string nextCopy = entryArray[j+1].word;
+
+					toUpper(currentCopy);
+					toUpper(nextCopy);
+					if(currentCopy<nextCopy){
 						string tempWord;
 						int tempOccur;
 						tempWord = entryArray[j].word;
@@ -232,7 +231,12 @@ void sortArray(sortOrder so){
 
 			for (i = 1; i < n; i++){
 				for (j = 0; j < n-1; j++){
-					if(entryArray[j].word > entryArray[j+1].word){
+					string currentCopy = entryArray[j].word;
+					string nextCopy = entryArray[j+1].word;
+
+					toUpper(currentCopy);
+					toUpper(nextCopy);
+					if(currentCopy>nextCopy){
 						string tempWord;
 						int tempOccur;
 						tempWord = entryArray[j].word;
