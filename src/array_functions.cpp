@@ -16,10 +16,12 @@
 #include "constants.h"
 #include "utilities.h"
 
+using namespace std;
+using namespace constants;
 
 //A structure to track words and number of occurrences
 struct entry{
-	std::string word;
+	string word;
 	int number_occurrences;
 };
 
@@ -34,7 +36,7 @@ int nextSlot = 0;
 const int INVALID_INDEX = -1;
 
 //Invalid word requested
-const std::string INVALID_WORD = "invalid";
+const string INVALID_WORD = "";
 
 //myfstream is not open
 const bool STREAM_NOT_OPEN = false;
@@ -56,12 +58,12 @@ int getArraySize(){
 	if(nextSlot == 0){
 		return 0;
 	}
-	return nextSlot-1;
+	return nextSlot;
 }
 
 //Gets word at given index from array
-std::string getArrayWordAt(int i){
-	if(i < nextSlot){
+string getArrayWordAt(int i){
+	if(i >= nextSlot || i<0){
 		return INVALID_WORD;
 	}
 	return entryArray[i].word;
@@ -69,23 +71,23 @@ std::string getArrayWordAt(int i){
 
 //Gets number of occurrences of word at given index
 int getArrayWord_NumbOccur_At(int i){
-	if(i < nextSlot){
+	if(i >= nextSlot || i<0){
 			return INVALID_INDEX;
-		}
-		return entryArray[i].number_occurrences;
+	}
+	return entryArray[i].number_occurrences;
 }
 
 /*loop through whole file, one line at a time
  * call processLine on each line
  * returns false: myfstream is not open
  *         true: otherwise*/
-bool processFile(std::fstream &myfstream){
+bool processFile(fstream &myfstream){
 	if(myfstream.is_open()){
-		std::string line;
+		string line;
 
 		while(!myfstream.eof()){
 			getline(myfstream, line);
-			strip_unwanted_chars(line);
+
 			processLine(line);
 		}
 		return true;
@@ -96,9 +98,9 @@ bool processFile(std::fstream &myfstream){
 
 /*take 1 line and extract all the tokens from it
 feed each token to processToken for recording*/
-void processLine(std::string &myString){
-	std::stringstream ss(myString);
-	std::string temp;
+void processLine(string &myString){
+	stringstream ss(myString);
+	string temp;
 
 	while(getline(ss,temp,' ')){
 		processToken(temp);
@@ -106,11 +108,22 @@ void processLine(std::string &myString){
 }
 
 /*Keep track of how many times each token seen*/
-void processToken(std::string &token){
+void processToken(string &token){
+	strip_unwanted_chars(token);
+	if(token.size() == 0){
+		return;
+	}
+
 	for(int i=0; i<nextSlot; i++){
-		toUpper(entryArray[i].word);
-		toUpper(token);
-		if(entryArray[i].word == token){
+
+
+		string copyToken = token;
+		string copyEntry = entryArray[i].word;
+
+		toUpper(copyToken);
+		toUpper(copyEntry);
+
+		if(copyToken == copyEntry){
 			entryArray[i].number_occurrences++;
 			return;
 		}
@@ -121,8 +134,8 @@ void processToken(std::string &token){
 }
 
 //Opens file, returns true if successful and false otherwise
-bool openFile(std::fstream& myfile, const std::string& myFileName,
-		std::ios_base::openmode mode){
+bool openFile(fstream& myfile, const string& myFileName,
+		ios_base::openmode mode){
 	myfile.open(myFileName, mode);
 	if(myfile.is_open()){
 		return true;
@@ -131,7 +144,7 @@ bool openFile(std::fstream& myfile, const std::string& myFileName,
 }
 
 // Closes myfile iff it is open
-void closeFile(std::fstream& myfile){
+void closeFile(fstream& myfile){
 	if(myfile.is_open()){
 		myfile.close();
 	}
@@ -142,41 +155,97 @@ void closeFile(std::fstream& myfile){
  * 			FAIL_NO_ARRAY_DATA if there are 0 entries in myEntryArray
  * 			SUCCESS if all data is written and outputfilename closes OK
  * */
-int writeArraytoFile(const std::string &outputfilename){
+int writeArraytoFile(const string &outputfilename){
+	fstream outputFile;
+	if(!openFile(outputFile,outputfilename,ios_base::openmode::_S_out)){
+		return constants::FAIL_FILE_DID_NOT_OPEN;
+	}
+	if(nextSlot == 0){
+		return FAIL_NO_ARRAY_DATA;
+	}
 
-	return FAIL_FILE_DID_NOT_OPEN;
+	for(int i = 0; i<nextSlot; i++){
+		string occurString = to_string(entryArray[i].number_occurrences);
+		outputFile << entryArray[i].word + " " + occurString + "\n";
+		cout << entryArray[i].word + " " + occurString + "\n";
+
+	}
+
+	closeFile(outputFile);
+	return SUCCESS;
 }
 
 //Sort myEntryArray based on so enum value.
-void sortArray(constants::sortOrder so){
+void sortArray(sortOrder so){
 	switch(so){
-		case constants::NONE:
-			return;
-		case constants::ASCENDING:
+		case NONE:
+			break;
+		case DESCENDING:
+		{
 			int i, j;
 
-			bool swapped;
+			int n = nextSlot;
 
-			int n = nextSlot/sizeof(entryArray[0].word);
-
-			for (i = 0; i < n-1; i++){
-				swapped = false;
-				for (j = 0; j < n-i-1; j++){
-					if(entryArray[j].word > entryArray[j+1].word){
-						std::string tempWord;
+			for (i = 1; i < n; i++){
+				for (j = 0; j < n-1; j++){
+					if(entryArray[j].word < entryArray[j+1].word){
+						string tempWord;
 						int tempOccur;
-						tempWord = entryArray[j-1].word;
-						tempOccur = entryArray[j-1].number_occurrences;
-						entryArray[j-1].word = entryArray[j].word;
-						entryArray[j-1].number_occurrences = entryArray[j].number_occurrences;
-						entryArray[j].word = tempWord;
-						entryArray[j].number_occurrences = tempOccur;
+						tempWord = entryArray[j].word;
+						tempOccur = entryArray[j].number_occurrences;
+						entryArray[j].word = entryArray[j+1].word;
+						entryArray[j].number_occurrences = entryArray[j+1].number_occurrences;
+						entryArray[j+1].word = tempWord;
+						entryArray[j+1].number_occurrences = tempOccur;
 					}
 				 }
-				 if (swapped == false){
-					break;
+			  }
+			break;
+		}
+		case NUMBER_OCCURRENCES:
+		{
+			int i, j;
+
+			int n = nextSlot;
+
+			for (i = 1; i < n; i++){
+				for (j = 0; j < n-1; j++){
+					if(entryArray[j].number_occurrences < entryArray[j+1].number_occurrences){
+						string tempWord;
+						int tempOccur;
+						tempWord = entryArray[j].word;
+						tempOccur = entryArray[j].number_occurrences;
+						entryArray[j].word = entryArray[j+1].word;
+						entryArray[j].number_occurrences = entryArray[j+1].number_occurrences;
+						entryArray[j+1].word = tempWord;
+						entryArray[j+1].number_occurrences = tempOccur;
+					}
 				 }
 			  }
+			break;
 		}
+		case ASCENDING:
+		{
+			int i, j;
+
+			int n = nextSlot;
+
+			for (i = 1; i < n; i++){
+				for (j = 0; j < n-1; j++){
+					if(entryArray[j].word > entryArray[j+1].word){
+						string tempWord;
+						int tempOccur;
+						tempWord = entryArray[j].word;
+						tempOccur = entryArray[j].number_occurrences;
+						entryArray[j].word = entryArray[j+1].word;
+						entryArray[j].number_occurrences = entryArray[j+1].number_occurrences;
+						entryArray[j+1].word = tempWord;
+						entryArray[j+1].number_occurrences = tempOccur;
+					}
+				 }
+			  }
+			break;
+		}
+	}
 }
 
