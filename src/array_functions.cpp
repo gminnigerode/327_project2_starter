@@ -29,10 +29,6 @@ entry entryArray [2100];
 //Index of next available slot in array
 int nextSlot = 0;
 
-//TODO look in utilities.h for useful functions, particularly strip_unwanted_chars!
-
-//Invalid input file
-const int EMPTY_INPUT_FILE = 0;
 
 //Invalid index
 const int INVALID_INDEX = -1;
@@ -58,9 +54,9 @@ void clearArray(){
 //Number of unique words in an array
 int getArraySize(){
 	if(nextSlot == 0){
-		return EMPTY_INPUT_FILE;
+		return 0;
 	}
-	return nextSlot;
+	return nextSlot-1;
 }
 
 //Gets word at given index from array
@@ -84,6 +80,16 @@ int getArrayWord_NumbOccur_At(int i){
  * returns false: myfstream is not open
  *         true: otherwise*/
 bool processFile(std::fstream &myfstream){
+	if(myfstream.is_open()){
+		std::string line;
+
+		while(!myfstream.eof()){
+			getline(myfstream, line);
+			strip_unwanted_chars(line);
+			processLine(line);
+		}
+		return true;
+	}
 
 	return STREAM_NOT_OPEN;
 }
@@ -91,23 +97,44 @@ bool processFile(std::fstream &myfstream){
 /*take 1 line and extract all the tokens from it
 feed each token to processToken for recording*/
 void processLine(std::string &myString){
+	std::stringstream ss(myString);
+	std::string temp;
 
+	while(getline(ss,temp,' ')){
+		processToken(temp);
+	}
 }
 
 /*Keep track of how many times each token seen*/
 void processToken(std::string &token){
-
+	for(int i=0; i<nextSlot; i++){
+		toUpper(entryArray[i].word);
+		toUpper(token);
+		if(entryArray[i].word == token){
+			entryArray[i].number_occurrences++;
+			return;
+		}
+	}
+	entryArray[nextSlot].word = token;
+	entryArray[nextSlot].number_occurrences = 1;
+	nextSlot++;
 }
 
 //Opens file, returns true if successful and false otherwise
 bool openFile(std::fstream& myfile, const std::string& myFileName,
 		std::ios_base::openmode mode){
+	myfile.open(myFileName, mode);
+	if(myfile.is_open()){
+		return true;
+	}
 	return FAILED_TO_OPEN;
 }
 
 // Closes myfile iff it is open
 void closeFile(std::fstream& myfile){
-
+	if(myfile.is_open()){
+		myfile.close();
+	}
 }
 
 /* serializes all content in myEntryArray to file outputfilename
@@ -116,11 +143,40 @@ void closeFile(std::fstream& myfile){
  * 			SUCCESS if all data is written and outputfilename closes OK
  * */
 int writeArraytoFile(const std::string &outputfilename){
+
 	return FAIL_FILE_DID_NOT_OPEN;
 }
 
 //Sort myEntryArray based on so enum value.
 void sortArray(constants::sortOrder so){
+	switch(so){
+		case constants::NONE:
+			return;
+		case constants::ASCENDING:
+			int i, j;
 
+			bool swapped;
+
+			int n = nextSlot/sizeof(entryArray[0].word);
+
+			for (i = 0; i < n-1; i++){
+				swapped = false;
+				for (j = 0; j < n-i-1; j++){
+					if(entryArray[j].word > entryArray[j+1].word){
+						std::string tempWord;
+						int tempOccur;
+						tempWord = entryArray[j-1].word;
+						tempOccur = entryArray[j-1].number_occurrences;
+						entryArray[j-1].word = entryArray[j].word;
+						entryArray[j-1].number_occurrences = entryArray[j].number_occurrences;
+						entryArray[j].word = tempWord;
+						entryArray[j].number_occurrences = tempOccur;
+					}
+				 }
+				 if (swapped == false){
+					break;
+				 }
+			  }
+		}
 }
 
